@@ -167,32 +167,34 @@ Result: The average win occurs after 55 moves.
             var hits = [];
 
             // reset probabilities
-            if (!this.useRandomProbability) {
-                for (var y = 0; y < boardSize; y++) {
+
+            for (var y = 0; y < boardSize; y++) {
+
+                if (!this.useRandomProbability) {
                     this.probabilities[y] = [];
-                    for (var x = 0; x < boardSize; x++) {
+                }
+                for (var x = 0; x < boardSize; x++) {
+                    if (!this.useRandomProbability) {
                         this.probabilities[y][x] = 0;
-                        // we remember hits as we find them for skewing
-                        if (hitsSkewProbabilities && this.positions[x][y] === HIT) {
-                            hits.push([x, y]);
-                        }
+                    }
+                    // we remember hits as we find them for skewing
+                    if (hitsSkewProbabilities && this.positions[x][y] === HIT) {
+                        hits.push([x, y]);
                     }
                 }
             }
 
-            if (!this.useRandomProbability) {
-                // calculate probabilities for each type of ship
-                for (var i = 0, l = ships.length; i < l; i++) {
-                    for (var y = 0; y < boardSize; y++) {
-                        for (var x = 0; x < boardSize; x++) {
-                            // horizontal check
-                            if (this.shipCanOccupyPosition(MISS, [x, y], ships[i], false)) {
-                                this.increaseProbability([x, y], ships[i], false);
-                            }
-                            // vertical check
-                            if (this.shipCanOccupyPosition(MISS, [x, y], ships[i], true)) {
-                                this.increaseProbability([x, y], ships[i], true);
-                            }
+            // calculate probabilities for each type of ship
+            for (var i = 0, l = ships.length; i < l; i++) {
+                for (var y = 0; y < boardSize; y++) {
+                    for (var x = 0; x < boardSize; x++) {
+                        // horizontal check
+                        if (this.shipCanOccupyPosition(MISS, [x, y], ships[i], false)) {
+                            this.increaseProbability([x, y], ships[i], false);
+                        }
+                        // vertical check
+                        if (this.shipCanOccupyPosition(MISS, [x, y], ships[i], true)) {
+                            this.increaseProbability([x, y], ships[i], true);
                         }
                     }
                 }
