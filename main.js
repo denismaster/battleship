@@ -33,7 +33,7 @@ Result: The average win occurs after 55 moves.
         volleyButton,
         monteCarlo = false;
 
-    const RANDOM_PLACE_COUNT = 10;
+    const RANDOM_PLACE_COUNT = 3; //ОЧЕНЬ ДОЛГО ИДЕТ РАСЧЕТ, СТАВИТЬ НЕБОЛЬШОЕ ЧИСЛО
 
     class Ship {
         constructor(x, y, size, isVertical) {
@@ -88,9 +88,9 @@ Result: The average win occurs after 55 moves.
                 this.hitsToWin += ships[i];
             }
 
-            this.distributeShips();
-
+            
             if (!this.useRandomProbability) {
+                this.distributeShips();
                 this.recalculateProbabilities();
             }
             else {
@@ -101,6 +101,7 @@ Result: The average win occurs after 55 moves.
         }
 
         distributeShips() {
+            this.ships=[];
             var pos, shipPlaced, vertical;
             for (var i = 0, l = ships.length; i < l; i++) {
                 shipPlaced = false;
@@ -137,7 +138,7 @@ Result: The average win occurs after 55 moves.
                     this.probabilities[x][y] = 0;
                 }
             }
-
+            this.distributeShips();
             for (let i = 0; i < RANDOM_PLACE_COUNT; i++) {
                 this.distributeShips();
                 for (let x = 0; x < boardSize; x++) {
@@ -212,11 +213,13 @@ Result: The average win occurs after 55 moves.
                     if (this.positions[adjacent[0]][adjacent[1]] == HIT) {
                         if (adjacent[0] == toSkew[i][0]) {
                             skewOrientation = 'vertical';
+                            break;
                         }
                         else if (adjacent[1] == toSkew[i][1]) {
                             skewOrientation = 'horizontal';
+                            break;
                         }
-                        break;
+                        
                     }
                 }
 
@@ -228,7 +231,6 @@ Result: The average win occurs after 55 moves.
                             this.probabilities[adjacent[0]][adjacent[1]] = 0;
                             this.positions[adjacent[0]][adjacent[1]]=MISS;
                         }
-                        
                     }
                     
                     continue;
