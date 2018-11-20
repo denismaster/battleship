@@ -33,7 +33,7 @@ Result: The average win occurs after 55 moves.
         volleyButton,
         monteCarlo = false;
 
-    const RANDOM_PLACE_COUNT = 3; //ОЧЕНЬ ДОЛГО ИДЕТ РАСЧЕТ, СТАВИТЬ НЕБОЛЬШОЕ ЧИСЛО
+    const RANDOM_PLACE_COUNT = 1000; //ОЧЕНЬ ДОЛГО ИДЕТ РАСЧЕТ, СТАВИТЬ НЕБОЛЬШОЕ ЧИСЛО
 
     class Ship {
         constructor(x, y, size, isVertical) {
@@ -45,10 +45,10 @@ Result: The average win occurs after 55 moves.
 
         isPointAcceptable(x, y) {
             if (this.isVertical) {
-                return x == this.x && (y >= this.y && y <= this.y + this.size-1)
+                return x == this.x && (y >= this.y && y <= this.y + this.size - 1)
             }
             else {
-                return y == this.y && (x >= this.x && x <= this.x + this.size-1)
+                return y == this.y && (x >= this.x && x <= this.x + this.size - 1)
             }
         }
     }
@@ -88,7 +88,7 @@ Result: The average win occurs after 55 moves.
                 this.hitsToWin += ships[i];
             }
 
-            
+
             if (!this.useRandomProbability) {
                 this.distributeShips();
                 this.recalculateProbabilities();
@@ -101,14 +101,17 @@ Result: The average win occurs after 55 moves.
         }
 
         distributeShips() {
-            this.ships=[];
+            this.ships = [];
+            console.log('start distribution')
             var pos, shipPlaced, vertical;
             for (var i = 0, l = ships.length; i < l; i++) {
                 shipPlaced = false;
+                console.log(`place ship with lenght ${l}`)
                 vertical = randomBoolean();
                 while (!shipPlaced) {
                     pos = this.getRandomPosition();
                     shipPlaced = this.placeShip(pos, ships[i], vertical);
+                    if (!shipPlaced) console.log(`Ship is not placed`)
                 }
                 this.ships.push(new Ship(pos[0], pos[1], ships[i], vertical));
             }
@@ -138,9 +141,18 @@ Result: The average win occurs after 55 moves.
                     this.probabilities[x][y] = 0;
                 }
             }
-            this.distributeShips();
+            //this.distributeShips();
             for (let i = 0; i < RANDOM_PLACE_COUNT; i++) {
+
+                for (var y = 0; y < boardSize; y++) {
+                    this.positions[y] = [];
+                    for (var x = 0; x < boardSize; x++) {
+                        this.positions[y][x] = null;
+                    }
+                }
+
                 this.distributeShips();
+
                 for (let x = 0; x < boardSize; x++) {
                     for (let y = 0; y < boardSize; y++) {
                         if (this.positions[x][y] == SHIP) {
@@ -155,32 +167,37 @@ Result: The average win occurs after 55 moves.
             var hits = [];
 
             // reset probabilities
-            for (var y = 0; y < boardSize; y++) {
-                this.probabilities[y] = [];
-                for (var x = 0; x < boardSize; x++) {
-                    this.probabilities[y][x] = 0;
-                    // we remember hits as we find them for skewing
-                    if (hitsSkewProbabilities && this.positions[x][y] === HIT) {
-                        hits.push([x, y]);
+            if (!this.useRandomProbability) {
+                for (var y = 0; y < boardSize; y++) {
+                    this.probabilities[y] = [];
+                    for (var x = 0; x < boardSize; x++) {
+                        this.probabilities[y][x] = 0;
+                        // we remember hits as we find them for skewing
+                        if (hitsSkewProbabilities && this.positions[x][y] === HIT) {
+                            hits.push([x, y]);
+                        }
                     }
                 }
             }
 
-            // calculate probabilities for each type of ship
-            for (var i = 0, l = ships.length; i < l; i++) {
-                for (var y = 0; y < boardSize; y++) {
-                    for (var x = 0; x < boardSize; x++) {
-                        // horizontal check
-                        if (this.shipCanOccupyPosition(MISS, [x, y], ships[i], false)) {
-                            this.increaseProbability([x, y], ships[i], false);
-                        }
-                        // vertical check
-                        if (this.shipCanOccupyPosition(MISS, [x, y], ships[i], true)) {
-                            this.increaseProbability([x, y], ships[i], true);
+            if (!this.useRandomProbability) {
+                // calculate probabilities for each type of ship
+                for (var i = 0, l = ships.length; i < l; i++) {
+                    for (var y = 0; y < boardSize; y++) {
+                        for (var x = 0; x < boardSize; x++) {
+                            // horizontal check
+                            if (this.shipCanOccupyPosition(MISS, [x, y], ships[i], false)) {
+                                this.increaseProbability([x, y], ships[i], false);
+                            }
+                            // vertical check
+                            if (this.shipCanOccupyPosition(MISS, [x, y], ships[i], true)) {
+                                this.increaseProbability([x, y], ships[i], true);
+                            }
                         }
                     }
                 }
             }
+
 
             // skew probabilities for positions adjacent to hits
             if (hitsSkewProbabilities) {
@@ -219,20 +236,19 @@ Result: The average win occurs after 55 moves.
                             skewOrientation = 'horizontal';
                             break;
                         }
-                        
+
                     }
                 }
 
                 if (ship && this.isShipDrowned(ship)) {
                     for (let adjacent of adjacentsHits) {
-                        
-                        if(this.positions[adjacent[0]][adjacent[1]]!=HIT)
-                        {
+
+                        if (this.positions[adjacent[0]][adjacent[1]] != HIT) {
                             this.probabilities[adjacent[0]][adjacent[1]] = 0;
-                            this.positions[adjacent[0]][adjacent[1]]=MISS;
+                            this.positions[adjacent[0]][adjacent[1]] = MISS;
                         }
                     }
-                    
+
                     continue;
                 }
 
@@ -417,8 +433,8 @@ Result: The average win occurs after 55 moves.
         }
     }
 
-    var computer1 = new Player('computer1');
-    var computer2 = new Player('computer2');
+    var computer1 = new Player('computer1', true); // алгоритм через возможные расстановки
+    var computer2 = new Player('computer2', false); //старый алгоритм
 
     computer1.setupBoard();
     computer2.setupBoard();
