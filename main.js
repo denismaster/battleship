@@ -184,7 +184,6 @@ Result: The average win occurs after 55 moves.
                 }
             }
 
-            // calculate probabilities for each type of ship
             for (var i = 0, l = ships.length; i < l; i++) {
                 for (var y = 0; y < boardSize; y++) {
                     for (var x = 0; x < boardSize; x++) {
@@ -223,60 +222,75 @@ Result: The average win occurs after 55 moves.
         skewProbabilityAroundHits(toSkew) {
             var uniques = [];
 
+            let positionsToSkew = toSkew;
+
             // add adjacent positions to the positions to be skewed
             for (var i = 0, l = toSkew.length; i < l; i++) {
                 let adjacentsHits = this.getAdjacentPositions(toSkew[i]);
                 let ship = this.ships.find(s => s.isPointAcceptable(toSkew[i][0], toSkew[i][1]));
-                let skewOrientation = null;
                 for (let adjacent of adjacentsHits) {
                     if (this.positions[adjacent[0]][adjacent[1]] == HIT) {
                         if (adjacent[0] == toSkew[i][0]) {
-                            skewOrientation = 'vertical';
-                            break;
+                            this.shipOrientation = 'vertical';
                         }
                         else if (adjacent[1] == toSkew[i][1]) {
-                            skewOrientation = 'horizontal';
-                            break;
+                            this.shipOrientation = 'horizontal';
                         }
-
+                        else{
+                            let [prevX,prevY] =  this.previousPoint;
+                            if (adjacent[0] == prevX) {
+                                this.shipOrientation = 'vertical';
+                            }
+                            else if (adjacent[1] == prevY) {
+                                this.shipOrientation = 'horizontal';
+                            }
+                            else
+                                this.shipOrientation = 'vertical';
+                        }
+                        break;
                     }
                 }
 
                 if (ship && this.isShipDrowned(ship)) {
-                    for (let adjacent of adjacentsHits) {
 
+                    for (let adjacent of adjacentsHits) {
                         if (this.positions[adjacent[0]][adjacent[1]] != HIT) {
                             this.probabilities[adjacent[0]][adjacent[1]] = 0;
                             this.positions[adjacent[0]][adjacent[1]] = MISS;
                         }
                     }
 
+
+                    this.shipOrientation = null;
                     continue;
                 }
 
-                if (skewOrientation)
-                    toSkew = toSkew.concat(adjacentsHits.filter(hit => {
+                if (this.shipOrientation)
+                    positionsToSkew = positionsToSkew.concat(adjacentsHits.filter(hit => {
                         const [x, y] = hit;
-                        if (skewOrientation === 'vertical') {
-                            return y == toSkew[1];
+                        if (this.shipOrientation === 'vertical') {
+                            return y != toSkew[i][1] && x == toSkew[i][0];
                         }
-                        else return x == toSkew[0];
+                        else return x != toSkew[i][0] && y == toSkew[i][1];
                     }));
                 else
-                    toSkew = toSkew.concat(adjacentsHits);
+                    positionsToSkew = positionsToSkew.concat(adjacentsHits);
             }
 
             // store uniques to avoid skewing positions multiple times
             // TODO: do A/B testing to see if doing this with strings is efficient
-            for (var i = 0, l = toSkew.length; i < l; i++) {
+            for (var i = 0, l = positionsToSkew.length; i < l; i++) {
+                console.log(`ToSkew: (${positionsToSkew[i][0]},${positionsToSkew[i][1]})`);
                 var uniquesStr = uniques.join('|').toString();
-                if (uniquesStr.indexOf(toSkew[i].toString()) === -1) {
-                    uniques.push(toSkew[i]);
+                if (uniquesStr.indexOf(positionsToSkew[i].toString()) === -1) {
+                    uniques.push(positionsToSkew[i]);
                     // skew probability
-                    const [x, y] = toSkew[i];
+                    const [x, y] = positionsToSkew[i];
                     this.probabilities[x][y] *= skewFactor;
                 }
             }
+
+            console.log(`End skewing`)
         }
 
         isShipDrowned(ship) {
@@ -384,6 +398,8 @@ Result: The average win occurs after 55 moves.
 
             this.previousX = x;
             this.previousY = y;
+
+            this.previousPoint = [x,y]
 
             this.recalculateProbabilities();
             this.redrawBoard(true);
